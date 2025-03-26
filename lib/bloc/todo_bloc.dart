@@ -18,11 +18,13 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
   }
 
   FutureOr<void> initialFetchEvents(
-    InitialFetchEvents event, Emitter<TodoState> emit)async {
-      emit(LoadingState());
-       try {
+    InitialFetchEvents event,
+    Emitter<TodoState> emit,
+  ) async {
+    emit(LoadingState());
+    try {
       await Future.delayed(Duration(seconds: 2));
-      
+
       List<TodoModel> todolist = await todoRepo.getAllToDo();
       emit(SuccessState(todolist: todolist));
     } catch (e) {
@@ -30,14 +32,16 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
     }
   }
 
-  FutureOr<void> addEvent(
-    AddEvent event, Emitter<TodoState> emit)async {
-     emit(LoadingState());
+  FutureOr<void> addEvent(AddEvent event, Emitter<TodoState> emit) async {
+    emit(LoadingState());
     try {
-      final response = await todoRepo.addToDo(event.todo.title!, event.todo.description!);
+      final response = await todoRepo.addToDo(
+        event.todo.title!,
+        event.todo.description!,
+      );
       if (response == 201) {
         emit(ResponseState(responseMsg: 'Todo added successfully'));
-        add(InitialFetchEvents()); 
+        add(InitialFetchEvents());
       } else {
         emit(ErrorState(errorMsg: 'Failed to add todo'));
       }
@@ -46,14 +50,13 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
     }
   }
 
-  FutureOr<void> updateEvent(
-    UpdateEvent event, Emitter<TodoState> emit)async {
+  FutureOr<void> updateEvent(UpdateEvent event, Emitter<TodoState> emit) async {
     emit(LoadingState());
-     try {
+    try {
       final response = await todoRepo.updateData(event.todo);
       if (response == 200) {
         emit(ResponseState(responseMsg: 'Todo updated successfully'));
-        add(InitialFetchEvents()); 
+        add(InitialFetchEvents());
       } else {
         emit(ErrorState(errorMsg: 'Failed to update todo'));
       }
@@ -62,9 +65,18 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
     }
   }
 
-  FutureOr<void> deleteEvent(
-    DeleteEvent event, Emitter<TodoState> emit)async {
+  FutureOr<void> deleteEvent(DeleteEvent event, Emitter<TodoState> emit) async {
     emit(LoadingState());
-    
+    try {
+      final response = await todoRepo.deleteToDo(event.id);
+      if (response == 200) {
+        emit(ResponseState(responseMsg: 'Todo deleted successfully'));
+        add(InitialFetchEvents()); // Refresh the list
+      } else {
+        emit(ErrorState(errorMsg: 'Failed to delete todo'));
+      }
+    } catch (e) {
+      emit(ErrorState(errorMsg: e.toString()));
+    }
   }
 }
